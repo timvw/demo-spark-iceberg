@@ -28,8 +28,10 @@ object Main {
       .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
       .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog")
       .config("spark.sql.catalog.spark_catalog.type", "hadoop")
-      .config("spark.sql.catalog.spark_catalog.warehouse", "s3a://data/iceberg")
+      .config("spark.sql.catalog.spark_catalog.warehouse", "s3://data/iceberg")
       .getOrCreate()
+
+    spark.sparkContext.hadoopConfiguration.set("fs.s3.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.endpoint", "http://localhost:9000")
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.connection.ssl.enabled", "false")
@@ -42,7 +44,7 @@ object Main {
     spark.sql("SHOW tables").show(10, false)
 
     // read some existing sample data
-    val df = spark.read.parquet("s3a://data/delta/COVID-19_NYT/part-00000-a496f40c-e091-413a-85f9-b1b69d4b3b4e-c000.snappy.parquet")
+    val df = spark.read.parquet("s3://data/delta/COVID-19_NYT/part-00000-a496f40c-e091-413a-85f9-b1b69d4b3b4e-c000.snappy.parquet")
 
 
     // (re-)create empty table in spark_catalog.db
@@ -54,7 +56,7 @@ object Main {
     spark.sql(s"""SELECT * FROM $covidTable""").show(10, false)
 
     // write more data into table
-    val df2 = spark.read.parquet("s3a://data/delta/COVID-19_NYT/*.parquet")
+    val df2 = spark.read.parquet("s3://data/delta/COVID-19_NYT/*.parquet")
     df2.writeTo(covidTable).using("iceberg").replace()
 
     spark.sql(s"select * from $covidTable").show(10, false)
